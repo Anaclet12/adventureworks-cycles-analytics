@@ -11,7 +11,9 @@
 
 ## At a Glance
 
-![Analytics ecosystem](docs/images/analytics_ecosystem.png)
+<p align="center">
+  <img src="docs/images/analytics_ecosystem.png" alt="Analytics ecosystem" width="700">
+</p>
 
 This project takes raw data from a fictional cycling retailer's two operational systems (CRM and ERP), unifies them through a PostgreSQL data warehouse, and delivers analytics across three layers:
 
