@@ -1,0 +1,76 @@
+# =============================================================================
+# adventureworks-cycles-analytics — root .gitignore
+# =============================================================================
+# Project-wide ignores. Each phase folder may have its own .gitignore
+# for phase-specific artifacts.
+# =============================================================================
+
+# ---- Data (NEVER commit raw or processed data) ----
+**/data/raw/*.csv
+**/data/raw/*.tsv
+**/data/raw/*.parquet
+**/data/processed/*.csv
+**/data/processed/*.parquet
+**/data/predictions/*.csv
+**/extracts/*.csv
+**/extracts/*.xlsx
+
+# ---- Logs ----
+*.log
+logs/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.mypy_cache/
+.ruff_cache/
+
+# ---- ML artifacts ----
+**/models/*.joblib
+**/models/*.pt
+**/models/*.pkl
+**/models/*.bin
+mlruns/
+mlartifacts/
+
+# ---- Power BI ----
+# Note: .pbix files ARE committed (they're the deliverable).
+# Backup and lock files are NOT.
+*.pbix.bak
+~$*.pbix
+
+# ---- Environment / secrets ----
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- IDE ----
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ---- Build / Docker ----
+dist/
+build/
+*.egg-info/
+docker-compose.override.yml
