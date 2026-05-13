@@ -1,4 +1,4 @@
-# Phase 2 â€” Business Intelligence
+# Phase 2 - Business Intelligence
 
 > Three Power BI dashboards built on the gold-layer star schema, serving the CFO, CMO, COO, and VP Merchandising. Built with DAX measures, a custom theme, and a derived RFM segmentation table.
 
@@ -14,21 +14,21 @@ The .pbix file in [`pbix/`](pbix/) contains three executive-ready dashboards plu
 
 ## Dashboards
 
-### Dashboard 1 â€” Sales & Margin
+### Dashboard 1- Sales & Margin
 *Audience: CFO, VP Merchandising*
 
 ![Sales & Margin](screenshots/d1_sales_margin.png)
 
 Shows revenue, gross margin, and average order value across product lines and regions. The margin heatmap pinpoints where the company is underpriced relative to cost.
 
-### Dashboard 2 â€” Customer Intelligence
+### Dashboard 2 - Customer Intelligence
 *Audience: CMO*
 
 ![Customer Intelligence](screenshots/d2_customer_intelligence.png)
 
-Surfaces the customer base: new vs. active customers (using first-purchase date â€” see [data quality findings](../docs/03_data_quality_findings.md)), behavioral segments via RFM (Whales, Everyday, At Risk, New Passions), and LTV / AOV by age band.
+Surfaces the customer base: new vs. active customers (using first-purchase date - see [data quality findings](../docs/03_data_quality_findings.md)), behavioral segments via RFM (Whales, Everyday, At Risk, New Passions), and LTV / AOV by age band.
 
-### Dashboard 3 â€” Operations & Fulfillment
+### Dashboard 3 - Operations & Fulfillment
 *Audience: COO, Customer Service Director*
 
 ![Operations & Fulfillment](screenshots/d3_operations_fulfillment.png)
@@ -39,14 +39,14 @@ Tracks order-to-ship lag by region and product line, seasonal volume patterns, a
 
 Classic star schema with one fact and three dimensions:
 
-- **fact_sales** â€” sales transactions
-- **dim_customers** â€” customer master
-- **dim_products** â€” product catalogue
-- **Date** â€” calendar table marked as Date Table
+- **fact_sales** - sales transactions
+- **dim_customers** - customer master
+- **dim_products** - product catalogue
+- **Date** - calendar table marked as Date Table
 
 Plus two supporting tables:
-- **_Measures** â€” dedicated container for all DAX measures
-- **Customer_RFM** â€” derived table containing each customer's Recency, Frequency, Monetary scores and assigned RFM_Segment label
+- **_Measures** - dedicated container for all DAX measures
+- **Customer_RFM** - derived table containing each customer's Recency, Frequency, Monetary scores and assigned RFM_Segment label
 
 ## DAX Measures
 
