@@ -84,7 +84,7 @@ Each phase is self-contained and has its own setup instructions. The recommended
 | Phase | Status |
 |---|---|
 | 1. Data Engineering — Bronze layer | ✅ Complete |
-| 1. Data Engineering — Silver layer | 🚧 In progress |
+| 1. Data Engineering — Silver layer | ✅ Complete |
 | 1. Data Engineering — Gold layer | ✅ Complete (views + extracts) |
 | 2. Business Intelligence | ✅ Complete (3 dashboards) |
 | 3. Machine Learning — Segmentation | 🚧 In progress |
