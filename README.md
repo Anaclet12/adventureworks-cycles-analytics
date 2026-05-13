@@ -87,7 +87,7 @@ Each phase is self-contained and has its own setup instructions. The recommended
 | 1. Data Engineering — Silver layer | ✅ Complete |
 | 1. Data Engineering — Gold layer | ✅ Complete (views + extracts) |
 | 2. Business Intelligence | ✅ Complete (3 dashboards) |
-| 3. Machine Learning — Segmentation | 🚧 In progress |
+| 3. Machine Learning — Segmentation | ✅ Complete |
 | 3. Machine Learning — Forecasting | 📋 Planned |
 | 3. Machine Learning — Prescriptive | 📋 Planned |
 | 4. Production Deployment | 📋 Planned |
