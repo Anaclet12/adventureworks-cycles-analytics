@@ -1,0 +1,32 @@
+# Core data stack
+pandas>=2.2,<3
+numpy>=1.26,<3
+pyarrow>=16
+
+# ML
+scikit-learn>=1.5
+joblib>=1.4
+
+# Time-series forecasting
+prophet>=1.1.5
+
+# Deep learning
+torch>=2.4
+
+# Visualization (for notebooks)
+matplotlib>=3.9
+seaborn>=0.13
+plotly>=5.24
+
+# Experiment tracking
+mlflow>=2.17
+
+# Notebook environment
+jupyter>=1.1
+ipykernel>=6.29
+notebook>=7.2
+
+# Dev tooling (lightweight set)
+pytest>=8.3
+black>=24.10
+ruff>=0.7
