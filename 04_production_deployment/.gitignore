@@ -1,0 +1,13 @@
+# Environment
+.env
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Data files are large and reproducible from Phase 1/3 — keep out of git
+# (Comment these lines out if you want the API to be self-contained on GitHub)
+data/processed/*.csv

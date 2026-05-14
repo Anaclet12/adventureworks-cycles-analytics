@@ -1,137 +1,177 @@
 # Phase 4 — Production Deployment
 
-> FastAPI service serving the trained models, packaged with Docker, monitored with Prometheus and Grafana, tracked with MLflow.
+> Wraps the Phase 3 machine learning models in a production-grade FastAPI service, with API key authentication, Prometheus metrics, and an integration test suite. This is the layer that turns notebooks into software other applications can call.
 
 ## What's In This Folder
 
 ```
 04_production_deployment/
-├── README.md                     ← This file
-├── api/                          FastAPI application
-│   ├── main.py                   Application entry point
-│   ├── schemas.py                Pydantic request/response models
-│   ├── dependencies.py           Model loading, DB connection
+├── README.md                       ← This file
+├── requirements-api.txt            Pinned dependencies for the service
+├── .env.example                    Environment configuration template
+├── api/
+│   ├── __init__.py
+│   ├── config.py                   Pydantic settings (env-driven)
+│   ├── schemas.py                  Request/response models
+│   ├── auth.py                     API key authentication
+│   ├── dependencies.py             Model loading + inference logic
+│   ├── main.py                     FastAPI app, routes, lifecycle
 │   └── routes/
-│       ├── segment.py            /predict/segment endpoint
-│       └── forecast.py           /predict/forecast endpoint
-├── docker/
-│   ├── Dockerfile.api            Multi-stage build for the API
-│   └── docker-compose.yml        Full stack: Postgres + API + monitoring
-├── monitoring/
-│   ├── prometheus.yml            Prometheus scrape config
-│   └── grafana/dashboards/       Pre-built Grafana dashboard JSONs
+│       ├── __init__.py
+│       ├── segment.py              POST /predict/segment
+│       └── forecast.py             POST /predict/forecast
 ├── tests/
-│   └── test_api.py               API integration tests
-└── docs/
-    ├── API_REFERENCE.md          Endpoint specifications
-    ├── DEPLOYMENT.md             How to run locally
-    └── MONITORING.md             Prometheus metrics + Grafana dashboards
+│   ├── __init__.py
+│   └── test_api.py                 16 integration tests
+├── models/                         Trained artifacts (copied from Phase 3)
+│   └── kmeans_segmentation.joblib
+└── data/
+    ├── processed/fact_sales.csv     For live RFM computation
+    └── predictions/
+        ├── forecasts.csv            Prophet forecasts
+        └── segments.csv             Cached RFM segments
 ```
 
-## What This Phase Delivers
+## The Service
 
-### FastAPI Service
+A FastAPI application exposing the Phase 3 models as HTTP endpoints.
 
-Two prediction endpoints:
+### Endpoints
 
-| Endpoint | Purpose |
-|---|---|
-| `POST /predict/segment` | Given a customer_key, return assigned segment + confidence |
-| `POST /predict/forecast` | Given product_line + country + horizon, return forecasted units/revenue |
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/` | No | Service metadata |
+| `GET` | `/health` | No | Health check (used by Docker healthcheck) |
+| `GET` | `/metrics` | No | Prometheus metrics |
+| `GET` | `/docs` | No | Interactive OpenAPI documentation |
+| `POST` | `/predict/segment` | **Yes** | Live customer segmentation |
+| `POST` | `/predict/forecast` | **Yes** | Revenue forecast by product line × country |
 
-Plus operational endpoints:
-- `GET /health` — health check
-- `GET /metrics` — Prometheus metrics
-- `GET /docs` — interactive Swagger UI
+### `POST /predict/segment`
 
-### Docker Stack
+Computes a customer's segment. The K-Means cluster is computed **live** from `fact_sales` — recency, frequency, and monetary are recalculated, then the trained K-Means model is applied. The rules-based Power BI RFM segment is looked up from cache when available.
 
-`docker-compose up` brings up:
+**Request:**
+```json
+{ "customer_key": 2 }
+```
 
-| Service | Purpose | Port |
-|---|---|---|
-| `postgres` | The data warehouse | 5432 |
-| `api` | FastAPI prediction service | 8000 |
-| `prometheus` | Metrics collection | 9090 |
-| `grafana` | Metrics visualization | 3000 |
-| `mlflow` | Experiment tracking + model registry | 5000 |
+**Response:**
+```json
+{
+  "customer_key": 2,
+  "rfm_segment": "Whales",
+  "kmeans_cluster": 1,
+  "kmeans_name": "K-Whales (active, high-value)",
+  "recency_days": 49.0,
+  "frequency": 11,
+  "monetary_usd": 6384.0,
+  "source": "cached"
+}
+```
 
-### Monitoring
+### `POST /predict/forecast`
 
-Prometheus collects:
-- HTTP request count, latency, error rate per endpoint
-- Model inference latency
-- Data drift indicators (feature distribution checks against training data)
+Returns the Prophet forecast for a product line × country combination. Forecasts were precomputed in Phase 3 notebook 03 for the 12 combinations with sufficient training history.
 
-Grafana dashboards visualize the above with alert thresholds.
+**Request:**
+```json
+{ "product_line": "Road", "country": "Australia", "horizon_months": 6 }
+```
 
-### CI/CD
+**Response:**
+```json
+{
+  "product_line": "Road",
+  "country": "Australia",
+  "horizon_months": 6,
+  "model": "Prophet",
+  "forecasts": [
+    { "month": "2014-01-01", "forecast": 124380.3, "lower": 77842.1, "upper": 169335.1 }
+  ]
+}
+```
 
-GitHub Actions workflow ([`.github/workflows/ci_python.yml`](../.github/workflows/ci_python.yml)):
-- Lint with ruff
-- Format check with black
-- Run pytest with coverage
-- Build Docker image on push to main
+Combinations without a trained model (e.g. `Touring × France`, which had < 18 months of history) return `404` with an explanatory message.
 
-## Quick Start
+## Running Locally
+
+### 1. Install dependencies
 
 ```bash
 cd 04_production_deployment
-docker compose -f docker/docker-compose.yml up --build
+python -m venv .venv
+# Windows:
+.\.venv\Scripts\Activate.ps1
+# macOS / Linux:
+source .venv/bin/activate
+
+pip install -r requirements-api.txt
 ```
 
-Then:
-- API docs: http://localhost:8000/docs
-- Grafana: http://localhost:3000 (admin/admin)
-- Prometheus: http://localhost:9090
-- MLflow: http://localhost:5000
-
-### Example API Calls
+### 2. Configure environment
 
 ```bash
-# Segment a customer
-curl -X POST http://localhost:8000/predict/segment \
-  -H "Content-Type: application/json" \
-  -d '{"customer_key": 12345}'
-
-# Forecast revenue
-curl -X POST http://localhost:8000/predict/forecast \
-  -H "Content-Type: application/json" \
-  -d '{
-    "product_line": "Road",
-    "country": "United States",
-    "horizon_months": 6
-  }'
+cp .env.example .env
+# Edit .env — at minimum, change API_KEY for any non-local use
 ```
 
-See [`docs/API_REFERENCE.md`](docs/API_REFERENCE.md) for full request/response schemas.
+### 3. Start the server
+
+```bash
+uvicorn api.main:app --reload
+```
+
+The service starts on `http://127.0.0.1:8000`. Visit `http://127.0.0.1:8000/docs` for the interactive API documentation.
+
+### 4. Make a request
+
+```bash
+curl -X POST http://127.0.0.1:8000/predict/segment \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: dev-key-change-in-production" \
+  -d '{"customer_key": 2}'
+```
+
+## Running the Tests
+
+```bash
+pytest tests/ -v
+```
+
+16 integration tests cover: metadata endpoints, authentication (missing key, wrong key), live segmentation (valid customer, nonexistent customer, validation errors), and forecasting (valid combination, horizon limits, unmodellable combinations, input validation).
+
+The tests use FastAPI's `TestClient` as a context manager, which triggers the application lifespan — so models are loaded exactly as they would be in production.
+
+## Design Decisions
+
+### Live segmentation, not cached lookup
+The `/predict/segment` endpoint recomputes RFM features from `fact_sales` rather than serving a precomputed lookup. This demonstrates the full inference pipeline — feature engineering, scaling, model application — and means the endpoint works for any customer in the warehouse, not just those present at training time.
+
+### API key authentication
+Prediction endpoints require an `X-API-Key` header. Health and metrics endpoints deliberately skip auth — health is needed by orchestration tooling (Docker, Kubernetes) before any key would be provisioned, and metrics are scraped by Prometheus.
+
+### Models loaded once at startup
+The FastAPI lifespan context loads all artifacts (K-Means model, scaler, forecast table, segment cache, `fact_sales`) into memory once. Per-request latency is dominated by dataframe filtering and model inference, not disk I/O.
+
+### Pydantic validation everywhere
+Request bodies are validated against typed schemas. `product_line` and `country` use `Literal` types, so invalid values are rejected with a `422` before any handler code runs. This shifts error handling to the framework boundary.
+
+### Configuration via environment
+All settings (`API_KEY`, `LOG_LEVEL`, paths, reference date) come from environment variables via `pydantic-settings`, with sensible local-development defaults. Nothing environment-specific is hard-coded.
 
 ## Tech Stack
 
-FastAPI · Pydantic · uvicorn · Docker · docker-compose · Prometheus · Grafana · MLflow
+FastAPI · Uvicorn · Pydantic v2 · scikit-learn · pandas · Prometheus · pytest
 
-## Key Design Decisions
+## Status
 
-### Why FastAPI (Not Flask or Django)
-FastAPI provides:
-- Automatic OpenAPI/Swagger documentation
-- Pydantic-based request validation
-- Async support out of the box
-- Better performance than Flask for the same code complexity
-
-### Why Multi-Stage Docker Build
-A multi-stage Dockerfile separates build dependencies (compilers, dev libs) from runtime, reducing final image size. The runtime image only contains Python + the wheel install + the trained model artifacts.
-
-### Why Prometheus + Grafana (Not Just Logs)
-- Prometheus pull-based scraping scales better than push-based logging.
-- Grafana dashboards provide visual SLO tracking.
-- Together they enable alerting (latency > threshold → notification).
-
-### Why MLflow
-Demonstrates the full ML lifecycle: experiment tracking during development, model registry for versioning, and serving the registered model from the API.
+- ✅ **4.1 — FastAPI service** (this document) — endpoints, auth, tests
+- ⬜ **4.2 — Docker** — multi-stage Dockerfile, docker-compose stack
+- ⬜ **4.3 — Monitoring + CI/CD** — Prometheus config, Grafana dashboards, GitHub Actions
 
 ## What's Next
 
-This is the final phase. The four phases together form a complete analytics platform: data engineering → BI → ML → production deployment.
+Phase 4.2 containerizes this service with a multi-stage Dockerfile and a `docker-compose.yml` that brings up the API alongside PostgreSQL, Prometheus, and Grafana. Phase 4.3 adds the monitoring dashboards and a GitHub Actions CI/CD pipeline.
 
-See [`../README.md`](../README.md) for the overall project context.
+See the [top-level README](../README.md) for overall project context.
