@@ -66,18 +66,6 @@ Each phase folder has its own README with detailed walkthrough.
 - **Margin paradox** — The lowest-margin product line is Road bikes (the highest revenue contributor at ~36%), while accessories ("Other Sales") carry the highest margin (~50%). This is a strategic finding for the CFO: the bike is the customer-acquisition product; the margin lives in the accessory attach-rate.
 - **Two segmentation approaches converge** — Business-rule RFM segmentation (built in Power BI) and unsupervised K-Means clustering (built in Python) agreed on approximately [TBD] of customer assignments, validating both approaches and reinforcing the same target audiences for marketing.
 
-## Quick Start
-
-Each phase is self-contained and has its own setup instructions. The recommended path through this project:
-
-```
-1. Read this README                                       (5 min)
-2. Read docs/01_business_context.md                       (10 min)
-3. Browse 01_data_engineering/ → run the SQL warehouse    (45 min setup)
-4. Browse 02_business_intelligence/ → open the .pbix      (5 min)
-5. Browse 03_machine_learning/ → run the notebooks        (30 min)
-6. Browse 04_production_deployment/ → docker compose up   (10 min)
-```
 
 ## Project Status
 
